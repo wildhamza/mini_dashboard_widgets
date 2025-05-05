@@ -1,0 +1,40 @@
+modules = ["flutter"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Flutter Dashboard App"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "flutter_dashboard_preview"
+
+[[workflows.workflow]]
+name = "Flutter Dashboard App"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd example && flutter pub get && flutter run -d web-server --web-port=5000 --web-hostname=0.0.0.0"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "flutter_dashboard_preview"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /home/replit && flutter run -d headless-server"
+
+[deployment]
+run = ["sh", "-c", "cd example && flutter pub get && flutter run -d web-server --web-port=5000 --web-hostname=0.0.0.0"]

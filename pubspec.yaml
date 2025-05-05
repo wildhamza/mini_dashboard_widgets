@@ -1,0 +1,24 @@
+name: mini_dashboard_widgets
+description: A Flutter package with beautiful, highly customizable dashboard widgets including stat cards and charts.
+version: 0.1.0
+homepage: https://github.com/yourusername/mini_dashboard_widgets
+
+environment:
+  sdk: ">=2.17.0 <4.0.0"
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  fl_chart: ^0.62.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
