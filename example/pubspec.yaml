@@ -1,0 +1,20 @@
+name: mini_dashboard_widgets_example
+description: Example app for mini_dashboard_widgets package
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  mini_dashboard_widgets:
+    path: ../
+  font_awesome_flutter: ^10.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.1
+
+flutter:
+  uses-material-design: true

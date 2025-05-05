@@ -2,6 +2,7 @@ modules = ["flutter"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["wget", "flutter"]
 
 [workflows]
 runButton = "Project"
@@ -15,26 +16,18 @@ author = "agent"
 task = "workflow.run"
 args = "Flutter Dashboard App"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "flutter_dashboard_preview"
-
 [[workflows.workflow]]
 name = "Flutter Dashboard App"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd example && flutter pub get && flutter run -d web-server --web-port=5000 --web-hostname=0.0.0.0"
+args = "cd example && flutter pub get && flutter run -d web-server --web-hostname=0.0.0.0 --web-port=5000"
 waitForPort = 5000
 
-[[workflows.workflow]]
-name = "flutter_dashboard_preview"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd /home/replit && flutter run -d headless-server"
-
 [deployment]
-run = ["sh", "-c", "cd example && flutter pub get && flutter run -d web-server --web-port=5000 --web-hostname=0.0.0.0"]
+run = ["sh", "-c", "cd example && flutter pub get && flutter run -d web-server --web-hostname=0.0.0.0 --web-port=5000"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80

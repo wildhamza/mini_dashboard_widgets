@@ -1,86 +1,96 @@
 import 'package:flutter/material.dart';
 
-/// Default theme data for the mini dashboard widgets.
+/// Theme data for mini_dashboard_widgets
 class MiniDashboardTheme {
-  /// Default colors for charts and graphs when specific colors are not provided.
-  static const List<Color> defaultColors = [
-    Color(0xFF4285F4), // Blue
-    Color(0xFF34A853), // Green
-    Color(0xFFFBBC05), // Yellow
-    Color(0xFFEA4335), // Red
-    Color(0xFF673AB7), // Purple
-    Color(0xFF00BCD4), // Cyan
-    Color(0xFFFF9800), // Orange
-    Color(0xFF795548), // Brown
-  ];
-
-  /// Returns a color from the default color palette based on index.
-  /// The index will wrap around if it exceeds the length of the color list.
-  static Color getColor(int index) {
-    return defaultColors[index % defaultColors.length];
-  }
-
-  /// Creates a gradient based on a base color.
-  static LinearGradient createGradient(Color baseColor, [Color? secondaryColor]) {
-    final secondColor = secondaryColor ?? baseColor.withOpacity(0.7);
-    
-    return LinearGradient(
-      colors: [baseColor, secondColor],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
-
-  /// Default text style for card titles.
-  static TextStyle titleTextStyle(BuildContext context) {
-    return TextStyle(
-      fontSize: 14,
+  /// Default card padding
+  static const EdgeInsets defaultCardPadding = EdgeInsets.all(16.0);
+  
+  /// Default chart radius
+  static const double defaultChartRadius = 100.0;
+  
+  /// Default animation duration for charts
+  static const Duration defaultAnimationDuration = Duration(milliseconds: 500);
+  
+  /// Default bar chart radius
+  static const double defaultBarRadius = 6.0;
+  
+  /// Default bar chart width
+  static const double defaultBarWidth = 16.0;
+  
+  /// Default pie chart section space
+  static const double defaultPieSectionSpace = 2.0;
+  
+  /// Default card border radius
+  static const double defaultCardBorderRadius = 12.0;
+  
+  /// Default card elevation
+  static const double defaultCardElevation = 2.0;
+  
+  /// Default title style for light theme
+  static TextStyle defaultLightTitleStyle(BuildContext context) {
+    return Theme.of(context).textTheme.titleMedium!.copyWith(
       fontWeight: FontWeight.w500,
-      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+      color: Colors.black87,
     );
   }
-
-  /// Default text style for card values.
-  static TextStyle valueTextStyle(BuildContext context) {
-    return TextStyle(
-      fontSize: 24,
+  
+  /// Default title style for dark theme
+  static TextStyle defaultDarkTitleStyle(BuildContext context) {
+    return Theme.of(context).textTheme.titleMedium!.copyWith(
+      fontWeight: FontWeight.w500,
+      color: Colors.white70,
+    );
+  }
+  
+  /// Default value style for light theme
+  static TextStyle defaultLightValueStyle(BuildContext context) {
+    return Theme.of(context).textTheme.headlineSmall!.copyWith(
       fontWeight: FontWeight.bold,
-      color: Theme.of(context).textTheme.bodyLarge?.color,
+      color: Colors.black,
     );
   }
-
-  /// Default box decoration for cards.
-  static BoxDecoration cardDecoration(BuildContext context, {Color? backgroundColor}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return BoxDecoration(
-      color: backgroundColor ?? (isDark ? Colors.grey[800] : Colors.white),
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
+  
+  /// Default value style for dark theme
+  static TextStyle defaultDarkValueStyle(BuildContext context) {
+    return Theme.of(context).textTheme.headlineSmall!.copyWith(
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
     );
   }
-
-  /// Default icon container decoration.
-  static BoxDecoration iconContainerDecoration(Color color) {
-    return BoxDecoration(
-      color: color.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(12),
-    );
-  }
-
-  /// Helper function to adjust colors based on dark/light theme.
+  
+  /// Default colors for charts in light mode
+  static final List<Color> defaultLightColors = [
+    Colors.blue.shade500,
+    Colors.green.shade500,
+    Colors.orange.shade500,
+    Colors.purple.shade500,
+    Colors.red.shade500,
+    Colors.teal.shade500,
+    Colors.amber.shade500,
+    Colors.indigo.shade500,
+  ];
+  
+  /// Default colors for charts in dark mode
+  static final List<Color> defaultDarkColors = [
+    Colors.blue.shade300,
+    Colors.green.shade300,
+    Colors.orange.shade300,
+    Colors.purple.shade300,
+    Colors.red.shade300,
+    Colors.teal.shade300,
+    Colors.amber.shade300,
+    Colors.indigo.shade300,
+  ];
+  
+  /// Returns the appropriate color based on theme brightness
   static Color adaptiveColor(BuildContext context, Color lightColor, Color darkColor) {
-    return Theme.of(context).brightness == Brightness.dark ? darkColor : lightColor;
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.light ? lightColor : darkColor;
   }
-
-  /// Helper function to generate a semi-transparent version of a color.
-  static Color withOpacity(Color color, double opacity) {
-    return color.withOpacity(opacity);
+  
+  /// Returns the appropriate text style based on theme brightness
+  static TextStyle adaptiveTextStyle(BuildContext context, TextStyle lightStyle, TextStyle darkStyle) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.light ? lightStyle : darkStyle;
   }
 }

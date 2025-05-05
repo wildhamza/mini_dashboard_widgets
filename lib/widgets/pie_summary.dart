@@ -1,313 +1,302 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../models/pie_data.dart';
+import '../theme/theme_data.dart';
 
-/// Position of the legend relative to the pie chart
-enum LegendPosition { top, bottom, left, right }
+/// Legend position for PieSummary widget
+enum LegendPosition { right, bottom }
 
-/// A customizable pie chart widget for displaying statistical data.
+/// A radial chart showing proportions with custom labels and colors
 class PieSummary extends StatefulWidget {
-  /// The list of data items to display in the pie chart.
+  /// The data to be displayed in the pie chart
   final List<PieData> data;
   
-  /// The position of the legend.
-  final LegendPosition legendPosition;
-  
-  /// Whether to show the legend.
-  final bool showLegend;
-  
-  /// The style for the legend text.
-  final TextStyle? legendStyle;
-  
-  /// The radius of the pie chart.
+  /// The radius of the pie chart
   final double radius;
   
-  /// The width of the pie chart stroke.
-  final double strokeWidth;
+  /// The stroke width of the pie sections
+  final double sectionStrokeWidth;
   
-  /// Whether to animate the pie chart when first displayed.
-  final bool animate;
+  /// The space between pie sections
+  final double sectionSpace;
   
-  /// The duration of the animation.
+  /// The position of the legend
+  final LegendPosition legendPosition;
+  
+  /// Whether to show the legend
+  final bool showLegend;
+  
+  /// The text style for the legend labels
+  final TextStyle? legendTextStyle;
+  
+  /// Optional center widget (e.g., "Total" text)
+  final Widget? centerWidget;
+  
+  /// The animation duration for the pie chart
   final Duration animationDuration;
   
-  /// The label to display in the center of the pie chart.
-  final String? centerLabel;
+  /// The decoration for the container
+  final BoxDecoration? decoration;
   
-  /// The style for the center label.
-  final TextStyle? centerLabelStyle;
-  
-  /// The spacing between the legend items.
-  final double legendSpacing;
-  
-  /// The icon size for the legend items.
-  final double legendIconSize;
-  
-  /// The padding inside the widget.
+  /// The padding for the container
   final EdgeInsetsGeometry padding;
   
-  /// The borderRadius for the widget container.
-  final BorderRadius borderRadius;
+  /// Custom builder for the section labels
+  final Widget Function(BuildContext context, PieData data, int index)? sectionLabelBuilder;
   
-  /// The background color for the widget.
-  final Color backgroundColor;
-  
-  /// Optional: Function to build custom legend items.
-  final Widget Function(PieData, int)? legendItemBuilder;
-  
-  /// Optional: Function to build the center content.
-  final Widget Function()? centerContentBuilder;
+  /// Custom tooltip builder
+  final Widget Function(BuildContext context, PieData data, int index)? tooltipBuilder;
 
+  /// Creates a PieSummary widget
   const PieSummary({
     Key? key,
     required this.data,
-    this.legendPosition = LegendPosition.bottom,
-    this.showLegend = true,
-    this.legendStyle,
     this.radius = 100.0,
-    this.strokeWidth = 20.0,
-    this.animate = true,
-    this.animationDuration = const Duration(milliseconds: 800),
-    this.centerLabel,
-    this.centerLabelStyle,
-    this.legendSpacing = 8.0,
-    this.legendIconSize = 12.0,
+    this.sectionStrokeWidth = 20.0,
+    this.sectionSpace = 2.0,
+    this.legendPosition = LegendPosition.right,
+    this.showLegend = true,
+    this.legendTextStyle,
+    this.centerWidget,
+    this.animationDuration = const Duration(milliseconds: 500),
+    this.decoration,
     this.padding = const EdgeInsets.all(16.0),
-    this.borderRadius = const BorderRadius.all(Radius.circular(12.0)),
-    this.backgroundColor = Colors.white,
-    this.legendItemBuilder,
-    this.centerContentBuilder,
+    this.sectionLabelBuilder,
+    this.tooltipBuilder,
   }) : super(key: key);
 
   @override
   State<PieSummary> createState() => _PieSummaryState();
 }
 
-class _PieSummaryState extends State<PieSummary> {
-  int touchedIndex = -1;
+class _PieSummaryState extends State<PieSummary> with SingleTickerProviderStateMixin {
+  int? hoveredIndex;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: widget.animationDuration,
+    );
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.data.isEmpty) {
-      return _buildEmptyState();
-    }
-
     return Container(
+      decoration: widget.decoration,
       padding: widget.padding,
-      decoration: BoxDecoration(
-        color: widget.backgroundColor,
-        borderRadius: widget.borderRadius,
-      ),
-      child: _buildLayout(),
+      child: widget.legendPosition == LegendPosition.right
+          ? Row(
+              children: [
+                Expanded(child: _buildChart()),
+                if (widget.showLegend) const SizedBox(width: 16),
+                if (widget.showLegend) _buildLegend(),
+              ],
+            )
+          : Column(
+              children: [
+                Expanded(child: _buildChart()),
+                if (widget.showLegend) const SizedBox(height: 16),
+                if (widget.showLegend) _buildLegend(),
+              ],
+            ),
     );
   }
 
-  Widget _buildLayout() {
-    switch (widget.legendPosition) {
-      case LegendPosition.top:
-        return Column(
-          children: [
-            if (widget.showLegend) _buildLegend(),
-            if (widget.showLegend) SizedBox(height: widget.legendSpacing),
-            Expanded(child: _buildPieChart()),
-          ],
-        );
-      case LegendPosition.bottom:
-        return Column(
-          children: [
-            Expanded(child: _buildPieChart()),
-            if (widget.showLegend) SizedBox(height: widget.legendSpacing),
-            if (widget.showLegend) _buildLegend(),
-          ],
-        );
-      case LegendPosition.left:
-        return Row(
-          children: [
-            if (widget.showLegend) _buildLegend(),
-            if (widget.showLegend) SizedBox(width: widget.legendSpacing),
-            Expanded(child: _buildPieChart()),
-          ],
-        );
-      case LegendPosition.right:
-        return Row(
-          children: [
-            Expanded(child: _buildPieChart()),
-            if (widget.showLegend) SizedBox(width: widget.legendSpacing),
-            if (widget.showLegend) _buildLegend(),
-          ],
-        );
-    }
-  }
-
-  Widget _buildPieChart() {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: PieChart(
-        PieChartData(
-          pieTouchData: PieTouchData(
-            touchCallback: (FlTouchEvent event, pieTouchResponse) {
-              setState(() {
-                if (!event.isInterestedForInteractions ||
-                    pieTouchResponse == null ||
-                    pieTouchResponse.touchedSection == null) {
-                  touchedIndex = -1;
-                  return;
-                }
-                touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-              });
+  Widget _buildChart() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox(
+          width: widget.radius * 2,
+          height: widget.radius * 2,
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: PieChartPainter(
+                  data: widget.data,
+                  animation: _animation.value,
+                  hoveredIndex: hoveredIndex,
+                  sectionSpace: widget.sectionSpace,
+                  centerRadius: widget.radius / 2,
+                  sectionStrokeWidth: widget.sectionStrokeWidth,
+                ),
+                size: Size(widget.radius * 2, widget.radius * 2),
+              );
             },
           ),
-          borderData: FlBorderData(show: false),
-          sectionsSpace: 0,
-          centerSpaceRadius: widget.radius - widget.strokeWidth,
-          sections: _buildSections(),
         ),
-        swapAnimationDuration: widget.animate ? widget.animationDuration : Duration.zero,
-      ),
+        if (hoveredIndex != null && hoveredIndex! >= 0 && hoveredIndex! < widget.data.length && widget.tooltipBuilder != null)
+          widget.tooltipBuilder!(context, widget.data[hoveredIndex!], hoveredIndex!),
+        if (widget.centerWidget != null) widget.centerWidget!,
+      ],
     );
-  }
-
-  List<PieChartSectionData> _buildSections() {
-    double total = widget.data.fold(0, (sum, item) => sum + item.value);
-    
-    return List.generate(widget.data.length, (i) {
-      final isTouched = i == touchedIndex;
-      final fontSize = isTouched ? 25.0 : 16.0;
-      final radius = isTouched ? widget.radius * 1.1 : widget.radius;
-      final widgetSize = isTouched ? 55.0 : 40.0;
-      final percent = (widget.data[i].value / total * 100).toStringAsFixed(1);
-
-      return PieChartSectionData(
-        color: widget.data[i].color,
-        value: widget.data[i].value,
-        title: '$percent%',
-        radius: radius,
-        titleStyle: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          shadows: const [Shadow(color: Colors.black, blurRadius: 2)],
-        ),
-        badgeWidget: _Badge(
-          size: widgetSize,
-          borderColor: widget.data[i].color,
-        ),
-        badgePositionPercentageOffset: .98,
-        titlePositionPercentageOffset: 0.5,
-      );
-    });
   }
 
   Widget _buildLegend() {
-    final isHorizontal = widget.legendPosition == LegendPosition.top || 
-                         widget.legendPosition == LegendPosition.bottom;
-    
-    final theme = Theme.of(context);
-    final defaultLegendStyle = theme.textTheme.bodyMedium;
-    
-    if (isHorizontal) {
-      return Wrap(
-        spacing: 16.0,
-        runSpacing: 8.0,
-        alignment: WrapAlignment.center,
-        children: List.generate(widget.data.length, (index) {
-          return widget.legendItemBuilder != null
-              ? widget.legendItemBuilder!(widget.data[index], index)
-              : _buildLegendItem(index, defaultLegendStyle);
-        }),
-      );
-    } else {
-      return SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(widget.data.length, (index) {
-            return widget.legendItemBuilder != null
-                ? widget.legendItemBuilder!(widget.data[index], index)
-                : _buildLegendItem(index, defaultLegendStyle);
-          }),
-        ),
-      );
+    final effectiveLegendTextStyle = widget.legendTextStyle ?? 
+        MiniDashboardTheme.adaptiveTextStyle(
+          context,
+          Theme.of(context).textTheme.bodyMedium!,
+          Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white70),
+        );
+
+    return widget.legendPosition == LegendPosition.right
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: widget.data.asMap().entries.map((entry) {
+              final i = entry.key;
+              final data = entry.value;
+              final isHovered = i == hoveredIndex;
+              
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: MouseRegion(
+                  onEnter: (_) => setState(() => hoveredIndex = i),
+                  onExit: (_) => setState(() => hoveredIndex = null),
+                  child: _buildLegendItem(data, i, isHovered, effectiveLegendTextStyle),
+                ),
+              );
+            }).toList(),
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: widget.data.asMap().entries.map((entry) {
+              final i = entry.key;
+              final data = entry.value;
+              final isHovered = i == hoveredIndex;
+              
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: MouseRegion(
+                  onEnter: (_) => setState(() => hoveredIndex = i),
+                  onExit: (_) => setState(() => hoveredIndex = null),
+                  child: _buildLegendItem(data, i, isHovered, effectiveLegendTextStyle),
+                ),
+              );
+            }).toList(),
+          );
+  }
+
+  Widget _buildLegendItem(PieData data, int index, bool isHovered, TextStyle textStyle) {
+    if (widget.sectionLabelBuilder != null) {
+      return widget.sectionLabelBuilder!(context, data, index);
     }
-  }
-
-  Widget _buildLegendItem(int index, TextStyle? defaultStyle) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: widget.legendIconSize,
-            height: widget.legendIconSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: widget.data[index].color,
-            ),
-          ),
-          const SizedBox(width: 8.0),
-          Flexible(
-            child: Text(
-              widget.data[index].label,
-              style: widget.legendStyle ?? defaultStyle,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Container(
-      padding: widget.padding,
-      decoration: BoxDecoration(
-        color: widget.backgroundColor,
-        borderRadius: widget.borderRadius,
-      ),
-      child: const Center(
-        child: Text(
-          'No data available',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: data.color,
+            shape: BoxShape.circle,
+            border: isHovered ? Border.all(color: Colors.black, width: 2) : null,
           ),
         ),
-      ),
+        const SizedBox(width: 8),
+        Text(
+          '${data.label} (${data.value.toStringAsFixed(1)}%)',
+          style: textStyle.copyWith(
+            fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _Badge extends StatelessWidget {
-  final double size;
-  final Color borderColor;
-
-  const _Badge({
-    required this.size,
-    required this.borderColor,
+class PieChartPainter extends CustomPainter {
+  final List<PieData> data;
+  final double animation;
+  final int? hoveredIndex;
+  final double sectionSpace;
+  final double centerRadius;
+  final double sectionStrokeWidth;
+  
+  PieChartPainter({
+    required this.data,
+    required this.animation,
+    this.hoveredIndex,
+    required this.sectionSpace,
+    required this.centerRadius,
+    required this.sectionStrokeWidth,
   });
-
+  
   @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: borderColor,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 5,
-            spreadRadius: 1,
-          )
-        ],
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) - (sectionStrokeWidth / 2);
+    
+    // Calculate total value for percentages
+    final total = data.fold(0.0, (sum, item) => sum + item.value);
+    
+    // Setup paint for sections
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = sectionStrokeWidth
+      ..strokeCap = StrokeCap.round;
+    
+    double startAngle = -pi / 2; // Start from top (negative Y axis)
+    
+    for (int i = 0; i < data.length; i++) {
+      final item = data[i];
+      final isHovered = i == hoveredIndex;
+      
+      // Calculate sweep angle based on percentage of total
+      final percent = item.value / total;
+      final sweepAngle = 2 * pi * percent * animation;
+      
+      // Set section color
+      paint.color = item.color;
+      
+      // If hovered, extend the radius slightly
+      final effectiveRadius = isHovered ? radius * 1.05 : radius;
+      
+      // Draw arc
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: effectiveRadius),
+        startAngle,
+        sweepAngle - (sectionSpace / effectiveRadius), // Subtract space between sections
+        false,
+        paint,
+      );
+      
+      // Move to next section
+      startAngle += sweepAngle;
+    }
+    
+    // Draw center circle
+    if (centerRadius > 0) {
+      final centerPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.white.withOpacity(0.8);
+      
+      canvas.drawCircle(center, centerRadius, centerPaint);
+    }
+  }
+  
+  @override
+  bool shouldRepaint(covariant PieChartPainter oldDelegate) {
+    return oldDelegate.animation != animation ||
+           oldDelegate.hoveredIndex != hoveredIndex ||
+           oldDelegate.data != data;
   }
 }

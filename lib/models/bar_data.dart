@@ -1,56 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// Data model for bar chart data points.
+/// Model class for bar chart data used in [ActivityBar] widget
 class BarData {
-  /// The label for this data point.
+  /// Label for the bar (displayed on x-axis)
   final String label;
   
-  /// The numerical value of this data point.
+  /// Value for the bar height
   final double value;
   
-  /// The color for this bar in the chart.
-  final Color color;
+  /// Color for the bar (optional, will use theme default if not specified)
+  final Color? color;
   
-  /// Optional: Additional data to be associated with this bar.
-  final dynamic extraData;
+  /// Optional custom tooltip text
+  final String? tooltipText;
 
-  /// Constructor for creating a BarData instance.
+  /// Creates a BarData object for use in ActivityBar widget
   const BarData({
     required this.label,
     required this.value,
-    required this.color,
-    this.extraData,
+    this.color,
+    this.tooltipText,
   });
-
-  /// Creates a copy of this BarData with specific fields replaced.
-  BarData copyWith({
-    String? label,
-    double? value,
-    Color? color,
-    dynamic extraData,
-  }) {
-    return BarData(
-      label: label ?? this.label,
-      value: value ?? this.value,
-      color: color ?? this.color,
-      extraData: extraData ?? this.extraData,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'BarData(label: $label, value: $value, color: $color)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is BarData &&
-        other.label == label &&
-        other.value == value &&
-        other.color == color;
-  }
-
-  @override
-  int get hashCode => label.hashCode ^ value.hashCode ^ color.hashCode;
 }

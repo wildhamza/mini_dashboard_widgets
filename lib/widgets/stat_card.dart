@@ -1,144 +1,123 @@
 import 'package:flutter/material.dart';
+import '../theme/theme_data.dart';
 
-/// A customizable card widget for displaying statistics with an icon, title, and value.
+/// A modern, customizable stat card widget with icon, title, and value
 class StatCard extends StatelessWidget {
-  /// The title text displayed in the card.
+  /// The title to be displayed in the card
   final String title;
   
-  /// The value text displayed in the card.
+  /// The value to be displayed in the card
   final String value;
   
-  /// The icon displayed in the card.
+  /// The icon to be displayed in the card
   final IconData icon;
   
-  /// The color of the icon.
-  final Color iconColor;
+  /// The color of the icon
+  final Color? iconColor;
   
-  /// The background color of the card.
-  final Color backgroundColor;
+  /// The background color of the card
+  final Color? backgroundColor;
   
-  /// The style for the title text.
+  /// The text style for the title
   final TextStyle? titleStyle;
   
-  /// The style for the value text.
+  /// The text style for the value
   final TextStyle? valueStyle;
   
-  /// The box decoration for the card.
+  /// The decoration for the card
   final BoxDecoration? decoration;
   
-  /// An optional widget displayed at the trailing end of the card.
-  final Widget? trailing;
-  
-  /// The callback when the card is tapped.
-  final VoidCallback? onTap;
-  
-  /// The padding inside the card.
+  /// The padding for the card contents
   final EdgeInsetsGeometry padding;
   
-  /// The margin around the card.
-  final EdgeInsetsGeometry margin;
+  /// Optional trailing widget (e.g., badge or arrow)
+  final Widget? trailing;
   
-  /// The border radius of the card.
-  final BorderRadiusGeometry borderRadius;
+  /// Border radius for the card
+  final double borderRadius;
   
-  /// The elevation of the card.
+  /// The elevation of the card
   final double elevation;
   
-  /// Optional builder for customizing the title widget.
-  final Widget Function(BuildContext, String)? titleBuilder;
+  /// Callback function when the card is tapped
+  final VoidCallback? onTap;
   
-  /// Optional builder for customizing the value widget.
-  final Widget Function(BuildContext, String)? valueBuilder;
+  /// Custom builder for the title
+  final Widget Function(BuildContext context, String title)? titleBuilder;
   
-  /// Optional builder for customizing the icon widget.
-  final Widget Function(BuildContext, IconData, Color)? iconBuilder;
+  /// Custom builder for the icon
+  final Widget Function(BuildContext context, IconData icon, Color? color)? iconBuilder;
   
-  /// An optional header widget displayed at the top of the card.
-  final Widget? header;
-  
-  /// An optional footer widget displayed at the bottom of the card.
-  final Widget? footer;
-
+  /// Creates a StatCard widget
   const StatCard({
     Key? key,
     required this.title,
     required this.value,
     required this.icon,
-    this.iconColor = Colors.blue,
-    this.backgroundColor = Colors.white,
+    this.iconColor,
+    this.backgroundColor,
     this.titleStyle,
     this.valueStyle,
     this.decoration,
-    this.trailing,
-    this.onTap,
     this.padding = const EdgeInsets.all(16.0),
-    this.margin = const EdgeInsets.all(8.0),
-    this.borderRadius = const BorderRadius.all(Radius.circular(12.0)),
+    this.trailing,
+    this.borderRadius = 12.0,
     this.elevation = 2.0,
+    this.onTap,
     this.titleBuilder,
-    this.valueBuilder,
     this.iconBuilder,
-    this.header,
-    this.footer,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    final defaultTitleStyle = theme.textTheme.titleMedium?.copyWith(
-      color: theme.textTheme.titleMedium?.color?.withOpacity(0.8),
-    );
-    
-    final defaultValueStyle = theme.textTheme.headlineSmall?.copyWith(
-      fontWeight: FontWeight.bold,
-    );
+    final effectiveIconColor = iconColor ?? 
+        MiniDashboardTheme.adaptiveColor(
+          context,
+          Theme.of(context).primaryColor,
+          Theme.of(context).primaryColor.withOpacity(0.8),
+        );
 
-    return Material(
+    final effectiveTitleStyle = titleStyle ?? 
+        MiniDashboardTheme.adaptiveTextStyle(
+          context,
+          MiniDashboardTheme.defaultLightTitleStyle(context),
+          MiniDashboardTheme.defaultDarkTitleStyle(context),
+        );
+
+    final effectiveValueStyle = valueStyle ?? 
+        MiniDashboardTheme.adaptiveTextStyle(
+          context,
+          MiniDashboardTheme.defaultLightValueStyle(context),
+          MiniDashboardTheme.defaultDarkValueStyle(context),
+        );
+    
+    return Card(
       elevation: elevation,
-      borderRadius: borderRadius,
-      color: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+      color: backgroundColor,
       child: InkWell(
+        borderRadius: BorderRadius.circular(borderRadius),
         onTap: onTap,
-        borderRadius: borderRadius,
         child: Container(
+          decoration: decoration,
           padding: padding,
-          margin: margin,
-          decoration: decoration ?? BoxDecoration(
-            color: backgroundColor,
-            borderRadius: borderRadius,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
-              if (header != null) 
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: header!,
+              _buildIcon(context, effectiveIconColor),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTitle(context, effectiveTitleStyle),
+                    const SizedBox(height: 4),
+                    Text(value, style: effectiveValueStyle),
+                  ],
                 ),
-              Row(
-                children: [
-                  _buildIcon(context),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTitle(context, defaultTitleStyle),
-                        const SizedBox(height: 4),
-                        _buildValue(context, defaultValueStyle),
-                      ],
-                    ),
-                  ),
-                  if (trailing != null) trailing!,
-                ],
               ),
-              if (footer != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: footer!,
-                ),
+              if (trailing != null) trailing!,
             ],
           ),
         ),
@@ -146,48 +125,26 @@ class StatCard extends StatelessWidget {
     );
   }
 
-  Widget _buildIcon(BuildContext context) {
+  Widget _buildIcon(BuildContext context, Color effectiveIconColor) {
     if (iconBuilder != null) {
-      return iconBuilder!(context, icon, iconColor);
+      return iconBuilder!(context, icon, effectiveIconColor);
     }
     
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: iconColor.withOpacity(0.1),
+        color: effectiveIconColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(
-        icon,
-        color: iconColor,
-        size: 24,
-      ),
+      child: Icon(icon, color: effectiveIconColor, size: 24),
     );
   }
 
-  Widget _buildTitle(BuildContext context, TextStyle? defaultStyle) {
+  Widget _buildTitle(BuildContext context, TextStyle effectiveTitleStyle) {
     if (titleBuilder != null) {
       return titleBuilder!(context, title);
     }
     
-    return Text(
-      title,
-      style: titleStyle ?? defaultStyle,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildValue(BuildContext context, TextStyle? defaultStyle) {
-    if (valueBuilder != null) {
-      return valueBuilder!(context, value);
-    }
-    
-    return Text(
-      value,
-      style: valueStyle ?? defaultStyle,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
+    return Text(title, style: effectiveTitleStyle);
   }
 }

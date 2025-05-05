@@ -1,68 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:mini_dashboard_widgets/mini_dashboard_widgets.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/stat_card_screen.dart';
 import 'screens/pie_summary_screen.dart';
 import 'screens/activity_bar_screen.dart';
 
 void main() {
-  runApp(const DashboardExampleApp());
+  runApp(const MyApp());
 }
 
-class DashboardExampleApp extends StatefulWidget {
-  const DashboardExampleApp({Key? key}) : super(key: key);
-
-  @override
-  State<DashboardExampleApp> createState() => _DashboardExampleAppState();
-}
-
-class _DashboardExampleAppState extends State<DashboardExampleApp> {
-  ThemeMode _themeMode = ThemeMode.light;
-
-  void _toggleThemeMode() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.light 
-          ? ThemeMode.dark 
-          : ThemeMode.light;
-    });
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Mini Dashboard Widgets Demo',
       debugShowCheckedModeBanner: false,
-      themeMode: _themeMode,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
+        primarySwatch: Colors.blue,
+        brightness: Brightness.light,
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
+        primarySwatch: Colors.blue,
+        brightness: Brightness.dark,
       ),
-      home: HomeScreen(toggleTheme: _toggleThemeMode),
+      themeMode: ThemeMode.system,
+      home: const DashboardApp(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  final VoidCallback toggleTheme;
-
-  const HomeScreen({Key? key, required this.toggleTheme}) : super(key: key);
+class DashboardApp extends StatefulWidget {
+  const DashboardApp({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<DashboardApp> createState() => _DashboardAppState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _DashboardAppState extends State<DashboardApp> {
   int _currentIndex = 0;
-
   final List<Widget> _screens = [
     const DashboardScreen(),
     const StatCardScreen(),
@@ -70,50 +49,37 @@ class _HomeScreenState extends State<HomeScreen> {
     const ActivityBarScreen(),
   ];
 
-  final List<String> _titles = [
-    'Dashboard',
-    'Stat Cards',
-    'Pie Summary',
-    'Activity Bar',
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
-        actions: [
-          IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-            onPressed: widget.toggleTheme,
-            tooltip: 'Toggle theme',
-          ),
-        ],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
       ),
-      body: _screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
+        onTap: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        destinations: const [
-          NavigationDestination(
+        items: const [
+          BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.credit_card),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.view_agenda),
             label: 'Stats',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.pie_chart),
             label: 'Pie',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Bars',
           ),
