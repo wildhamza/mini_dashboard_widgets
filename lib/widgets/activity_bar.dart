@@ -250,6 +250,14 @@ class _ActivityBarState extends State<ActivityBar> with SingleTickerProviderStat
     );
   }
 
+  /// Builds a horizontal bar chart by rotating the vertical chart
+  /// 
+  /// Instead of duplicating the complex layout logic, this method simply
+  /// rotates the vertical chart by 90 degrees. This approach ensures
+  /// consistent behavior and appearance between both orientations while
+  /// minimizing code duplication.
+  /// 
+  /// Returns a widget containing the horizontal bar chart.
   Widget _buildHorizontalBarChart() {
     // For simplicity, we'll just rotate the vertical chart
     return RotatedBox(

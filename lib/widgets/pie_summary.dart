@@ -223,14 +223,35 @@ class _PieSummaryState extends State<PieSummary> with SingleTickerProviderStateM
   }
 }
 
+/// Custom painter for drawing the pie chart
+/// 
+/// Handles the rendering of pie sections, animations, and hover effects
 class PieChartPainter extends CustomPainter {
+  /// Data points to display in the pie chart
   final List<PieData> data;
+  
+  /// Animation progress value (0.0 to 1.0)
   final double animation;
+  
+  /// Index of the currently hovered section, if any
   final int? hoveredIndex;
+  
+  /// Space between pie sections in logical pixels
   final double sectionSpace;
+  
+  /// Radius of the center circle (for donut charts)
   final double centerRadius;
+  
+  /// Width of each pie section stroke
   final double sectionStrokeWidth;
   
+  /// Creates a PieChartPainter
+  /// 
+  /// The [animation] value controls the drawing progress (0.0 to 1.0)
+  /// The [hoveredIndex] highlights the section at that index
+  /// The [sectionSpace] adds spacing between sections
+  /// The [centerRadius] creates a donut hole in the center
+  /// The [sectionStrokeWidth] controls the thickness of the pie sections
   PieChartPainter({
     required this.data,
     required this.animation,
@@ -240,6 +261,14 @@ class PieChartPainter extends CustomPainter {
     required this.sectionStrokeWidth,
   });
   
+  /// Paints the pie chart on the canvas
+  /// 
+  /// This method handles:
+  /// - Calculating the total value and percentages
+  /// - Drawing each pie section with proper angles
+  /// - Applying hover effects
+  /// - Drawing the center circle for donut charts
+  /// - Animating the chart based on animation progress
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -254,8 +283,10 @@ class PieChartPainter extends CustomPainter {
       ..strokeWidth = sectionStrokeWidth
       ..strokeCap = StrokeCap.round;
     
-    double startAngle = -pi / 2; // Start from top (negative Y axis)
+    // Start from top (negative Y axis)
+    double startAngle = -pi / 2; 
     
+    // Draw each pie section
     for (int i = 0; i < data.length; i++) {
       final item = data[i];
       final isHovered = i == hoveredIndex;
@@ -267,10 +298,10 @@ class PieChartPainter extends CustomPainter {
       // Set section color
       paint.color = item.color;
       
-      // If hovered, extend the radius slightly
+      // If hovered, extend the radius slightly for visual feedback
       final effectiveRadius = isHovered ? radius * 1.05 : radius;
       
-      // Draw arc
+      // Draw arc with spacing between sections
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: effectiveRadius),
         startAngle,
@@ -283,7 +314,7 @@ class PieChartPainter extends CustomPainter {
       startAngle += sweepAngle;
     }
     
-    // Draw center circle
+    // Draw center circle for donut chart effect
     if (centerRadius > 0) {
       final centerPaint = Paint()
         ..style = PaintingStyle.fill
@@ -293,6 +324,12 @@ class PieChartPainter extends CustomPainter {
     }
   }
   
+  /// Determines if the painter should repaint
+  /// 
+  /// Repaints when:
+  /// - Animation value changes
+  /// - Hovered section changes
+  /// - Data changes
   @override
   bool shouldRepaint(covariant PieChartPainter oldDelegate) {
     return oldDelegate.animation != animation ||

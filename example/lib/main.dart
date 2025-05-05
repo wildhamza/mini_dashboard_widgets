@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mini_dashboard_widgets/mini_dashboard_widgets.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/stat_card_screen.dart';
 import 'screens/pie_summary_screen.dart';
